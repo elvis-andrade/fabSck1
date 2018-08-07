@@ -1,0 +1,1735 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Smartcitizen Project - Fablabsantiago.org</title>
+    <link rel="stylesheet" href="leaflet.css" />
+	
+
+	<link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+
+	<link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+	
+	<script src='js/Map.SelectArea.js'></script>
+
+	<!-- Include Required Prerequisites -->
+<script type="text/javascript" src="//cdn.jsdelivr.net/jquery/1/jquery.min.js"></script>
+<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/3/css/bootstrap.css" />
+ 
+<!-- Include Date Range Picker -->
+<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/leaflet.markercluster.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.css" />
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.Default.css" />
+
+</head>
+<body>
+
+<div id="currentpos"></div>
+
+<div id="dataType">
+	<div id="logo"></div>
+	<div id="date">
+		
+
+<input type="text" name="daterange" id="fullDp" value="20/08/2017 1:30 PM - 24/08/2017 2:00 PM" />
+	
+	
+
+	</div>
+	<ul>
+		<li class="titleElement">Bicycle data</li>
+		<li class="dataElements" id="bikeExperience"><span class="icon">&#xf096;</span> Route experience</li>
+		<li class="dataElements" id="bikeRoute"><span class="icon">&#xf096;</span> Bicycle tracks</li>
+		<li class="dataElements" id="bikeUserTrip"><span class="icon">&#xf096;</span> Users' trips</li>
+		<li class="dataElements" id="bikeBump"><span class="icon">&#xf096;</span> Bumps</li>
+		<li class="dataElements" id="playStop"><span class="icon">&#xf04b;</span> <span id="playStopLabel">Bicycle movements</span></li>
+		<li class="titleElement">Environmental data</li>
+		<li class="dataElements optionb" id="dataNone">None</li>
+		<li class="dataElements optionb" id="data6">Route Quality</li>
+		<li class="dataElements optionb" id="data0">Noise</li>
+		<li class="dataElements optionb" id="data1">Humidity</li>
+		<li class="dataElements optionb" id="data2">CO</li>
+		<li class="dataElements optionb" id="data3">Light</li>
+		<li class="dataElements optionb" id="data4">NO2</li>
+		<li class="dataElements optionb" id="data5">Temperature</li>
+		
+		<li id="surveyButton">Surveys</li>
+		
+	</ul>
+	
+</div>
+
+<div id="leyenda"></div>
+
+<div id="statistics"></div>
+
+<div id="mapContainer">
+        <div id="map"></div>
+</div>
+
+<div id="dateTimePlay"></div>
+
+
+<!-- <div id="zoomArea"></div> -->
+
+<div id="surveyArea">
+	<select id="questions" name="q">
+		<option disabled selected value="">Select a question...</option>
+
+	  </select>
+	  
+	  <div id="surveyResults">
+		<div id="badResults">0</div>
+		<div id="neutralResults">0</div>
+		<div id="goodResults">0</div>
+	  </div>
+	  
+	  <div id="surveyData">
+		
+	  </div>
+</div>
+
+<div id="graph">
+	<canvas id="canvasGraph"></canvas>
+</div>
+
+<!-- <script src="http://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script> -->
+<script src="js/leaflet-heat.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://www.chartjs.org/dist/2.6.0/Chart.js"></script>
+<script src="https://www.chartjs.org/samples/latest/utils.js"></script>
+
+
+
+<script>
+
+
+if (location.protocol != 'https:')
+{
+ location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+}
+
+var questions = '';
+var results = '';
+
+var questionId='';
+	
+first=true;
+
+	function setLeyenda(name, top) {
+			$( "#leyenda" ).css("display", "block");
+			$( "#leyenda" ).css("marginTop", top+"px");
+			$( "#leyenda" ).css("background-image", "url("+name+")");
+			
+
+	}
+
+	function removeLeyenda() {
+			$( "#leyenda" ).css("display", "none");
+	}
+
+	
+$( document ).ready(function() {
+
+
+
+	$( "#surveyButton" ).click(function() {
+		$( "#questions" ).val("");
+		$( "#surveyArea" ).css('display','block');
+		$( "#goodResults" ).css('display','none');
+		$( "#neutralResults" ).css('display','none');
+		$( "#badResults" ).css('display','none');
+		$( "#surveyData" ).html("");
+		map.removeLayer(layerSurvey);
+		map.removeLayer(heat);
+		map.removeLayer(pointLayerNo);
+		map.removeLayer(pointLayerYes);
+		map.removeLayer(pointLayerBump);
+		map.removeLayer(bikePath);
+		
+		bikeExp=false;
+		$("#bikeExperience > span").html('&#xf096;');
+		
+		bikeBump=false;
+		$("#bikeBump > span").html('&#xf096;');
+		
+		bikeUserTrip=false;
+		$("#bikeUserTrip > span").html('&#xf096;');
+		
+		$( ".dataElements" ).removeClass("light");
+		$( "#dataNone" ).addClass("light");
+		
+	});
+	
+	var layerSurvey='';
+	
+	$( "#questions" ).change(function() {
+		questionId = $('#questions').find(":selected").val();
+		console.log(questions, questionId);
+		
+		index=questions.map(function(o) { return o.id; }).indexOf(questionId.toString());
+		
+		console.log(questions[index]);
+		
+		map.removeLayer(layerSurvey);
+		
+		
+		layerSurvey = L.circle([questions[index].lat, questions[index].lng], {
+			color: 'red',
+			fillColor: '#f03',
+			fillOpacity: 0.5,
+			radius: 500
+		}).addTo(map);
+		
+		map.addLayer(layerSurvey);
+		
+		$( "#goodResults" ).css('display','block');
+		$( "#neutralResults" ).css('display','block');
+		$( "#badResults" ).css('display','block');
+		
+		$( "#surveyData" ).html("");
+		
+		$.get( "https://smartcitizen.cl/utils/getQuestionResults.php?questionId="+questionId, function( data ) {
+						if (!isJson(data)){
+							console.log(data);
+							return;
+						} else {
+							results = JSON.parse(data);
+							console.log(questions);
+							$( "#badResults" ).html('0');
+							$( "#neutralResults" ).html('0');
+							$( "#goodResults" ).html('0');
+							for (var i = 0; i < results.length; i++) {
+								if (results[i].value=='b') {
+									$( "#badResults" ).html(results[i].total);
+								}
+								
+								if (results[i].value=='n') {
+									$( "#neutralResults" ).html(results[i].total);
+								}
+								
+								if (results[i].value=='g') {
+									$( "#goodResults" ).html(results[i].total);
+								}
+							}	
+						
+						}
+		});
+		
+		
+		console.log("https://smartcitizen.cl/utils/getStationData.php?lat="+questions[index].lat+"&lng="+questions[index].lng);
+		
+		$.get( "https://smartcitizen.cl/utils/getStationData.php?lat="+questions[index].lat+"&lng="+questions[index].lng, function( data ) {
+						if (!isJson(data)){
+							console.log(data);
+							return;
+						} else {
+							datas = JSON.parse(data);
+							console.log(datas);
+							
+							$( "#surveyData" ).append('<p><b>Humidity</b>: '+ (7 + 125 / 65536 * datas[0].humidity).toFixed(2)+' %Rel</p>');
+							$( "#surveyData" ).append('<p><b>CO</b>: '+ (datas[0].co/75000).toFixed(2)+' PPM</p>');
+							$( "#surveyData" ).append('<p><b>Light</b>: '+ (datas[0].light/10).toFixed(2)+' Lux</p>');
+							$( "#surveyData" ).append('<p><b>NO2</b>: '+ (datas[0].no2/22000).toFixed(2)+' PPM</p>');
+							$( "#surveyData" ).append('<p><b>PM02</b>: '+ (datas[0].pm02/1000).toFixed(2)+' mg/m3</p>');
+							$( "#surveyData" ).append('<p><b>PM10</b>: '+ (datas[0].pm10/1000).toFixed(2)+' mg/m3</p>');
+							$( "#surveyData" ).append('<p><b>Temperature</b>: '+ (((-46.85 + 175.72 / 65536 * datas[0].temperature)*-1)-4).toFixed(2)+'  &#x2103;</p>');
+
+						}
+		});
+
+
+		
+	});
+
+
+			$.get( "https://smartcitizen.cl/utils/getQuestions.php", function( data ) {
+						if (!isJson(data)){
+							console.log(data);
+							return;
+						} else {
+							questions = JSON.parse(data);
+							console.log(questions);
+							for (var i = 0; i < questions.length; i++) {
+								$('#questions').append('<option value="'+ questions[i].id +'">'+questions[i].text+'</option>'); 
+							}	
+						
+						}
+			});
+
+
+
+
+	zoom=12;
+	//map = L.map('map', {zoomDelta: 1, zoomAnimation: false, zoomControl: false}).setView([-33.45694, -70.64827], zoom);
+
+	map = L.map('map', {zoomDelta: 1, zoomAnimation: true, zoomControl: false}).setView([-33.45694, -70.64827], zoom);
+
+	tiles = L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=sk.eyJ1Ijoic2MybCIsImEiOiJjaXgwZjZxenYwMWp1MnlvMDl3M3g3OHQ2In0.KOs6h_53tws8O5UuB19NGw', {
+		id: 'mapbox.dark',
+		attribution: '<a href="http://www.fablabsantiago.org">Fab Lab Santiago</a>' 
+	}).addTo(map);
+	
+	
+
+	
+	map.selectArea.enable();
+
+	map.on('areaselected', (e) => {
+	  console.log(e.bounds.toBBoxString()); // lon, lat, lon, lat
+	  
+	  boundsCoords=e.bounds.toBBoxString().split(',');
+	  console.log(boundsCoords);
+	  
+	  routeQualityAverage='';
+	  noiseAverage='';
+	  yesNumber='';
+	  noNumber='';
+	  bumpNumber='';
+
+	  		$.get( "https://smartcitizen.cl/utils/getAverages.php?date="+dayData+"&tlLng="+boundsCoords[0]+"&parameter=audioarray&tlLat="+boundsCoords[1]+"&brLng="+boundsCoords[2]+"&brLat="+boundsCoords[3], function( data ) {
+				if (!isJson(data)){
+					console.log('Error: ' + data);
+					return;
+				} else {
+					var values = JSON.parse(data);
+					console.log('Noise='+values[0].audioarray);
+					noiseAverage=values[0].audioarray;
+				}
+			});
+			
+			$.get( "https://smartcitizen.cl/utils/getAverages.php?date="+dayData+"&tlLng="+boundsCoords[0]+"&parameter=routequality&tlLat="+boundsCoords[1]+"&brLng="+boundsCoords[2]+"&brLat="+boundsCoords[3], function( data ) {
+				if (!isJson(data)){
+					console.log('Error: ' + data);
+					return;
+				} else {
+					var values = JSON.parse(data);
+					console.log('Route Quality='+values[0].routequality);
+					routeQualityAverage=values[0].routequality;
+				}
+			});
+			
+			$.get( "https://smartcitizen.cl/utils/getYesNumber.php?date="+dayData+"&tlLng="+boundsCoords[0]+"&tlLat="+boundsCoords[1]+"&brLng="+boundsCoords[2]+"&brLat="+boundsCoords[3], function( data ) {
+				if (!isJson(data)){
+					console.log('Error: ' + data);
+					return;
+				} else {
+					var values = JSON.parse(data);
+					console.log('Good Experience='+values[0].yes);
+					yesNumber=values[0].yes;
+				}
+			});
+			
+			$.get( "https://smartcitizen.cl/utils/getNoNumber.php?date="+dayData+"&tlLng="+boundsCoords[0]+"&tlLat="+boundsCoords[1]+"&brLng="+boundsCoords[2]+"&brLat="+boundsCoords[3], function( data ) {
+				if (!isJson(data)){
+					console.log('Error: ' + data);
+					return;
+				} else {
+					var values = JSON.parse(data);
+					console.log('Bad Experience='+values[0].no);
+					noNumber=values[0].no;
+				}
+			});
+			
+			$.get( "https://smartcitizen.cl/utils/getBumpNumber.php?date="+dayData+"&tlLng="+boundsCoords[0]+"&tlLat="+boundsCoords[1]+"&brLng="+boundsCoords[2]+"&brLat="+boundsCoords[3], function( data ) {
+				if (!isJson(data)){
+					console.log('Error: ' + data);
+					return;
+				} else {
+					var values = JSON.parse(data);
+					console.log('Bump Number='+values[0].bump);
+					bumpNumber=values[0].bump;
+				}
+			});
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+		tlLng=boundsCoords[0];
+		tlLat=boundsCoords[1];
+		brLng=boundsCoords[2];
+		brLat=boundsCoords[3];
+		
+		$.get( "https://smartcitizen.cl/utils/getAllPointTest.php?date="+dayData, function( data ) {
+					if (!isJson(data)){
+						//console.log(data);
+						console.log("No points in date " + dayQuery + ".");
+						return;
+					}
+					data = JSON.parse(data);
+					pointArray=[];
+					segments=[];
+					segmentsSelected=[];
+					for (var i = 0; i < data.length-1; i++) {
+						segments.push({ distance:0, speed:0, timeInterval:0, beginLat: data[i].lat, beginLng: data[i].lng, beginUser: data[i].deviceId, beginTimestamp: mysqlTimeDateToJavascriptTimeDateSeconds(data[i].timestamp),  middleLat: ((parseFloat(data[i].lat)+parseFloat(data[i+1].lat))/2), middleLng: ((parseFloat(data[i].lng)+parseFloat(data[i+1].lng))/2),   endLat: data[i+1].lat, endLng: data[i+1].lng, endUser: data[i+1].deviceId, endTimestamp: mysqlTimeDateToJavascriptTimeDateSeconds(data[i+1].timestamp)} );
+					}
+					//remove elements (e.g., segments of different users, or where timeinterval is too long) and compute distance in km and timeinterval
+					for (var i = 0; i < segments.length; i++) {
+						if (segments[i].beginLat==0 || segments[i].beginLng==0 || segments[i].endLat==0 || segments[i].endLng==0) {
+							//console.log("RemoveLatLng0", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+						if (segments[i].beginUser != segments[i].endUser) {
+							//console.log("RemoveDifferentUser", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+						if ((segments[i].endTimestamp-segments[i].beginTimestamp)>80) {
+							//console.log("RemoveTimeDifference", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+						if (segments[i].beginLng==segments[i].endLng && segments[i].beginLat==segments[i].endLat) {
+							//console.log("RemovePoint", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+					}
+					//compute distance in km and timeinterval
+					for (var i = 0; i < segments.length; i++) {
+						segments[i].timeInterval=segments[i].endTimestamp-segments[i].beginTimestamp;
+						segments[i].distance=getDistanceFromLatLonInKm(segments[i].beginLat, segments[i].beginLng, segments[i].endLat, segments[i].endLng);
+						segments[i].speed=segments[i].distance/(segments[i].timeInterval/2400);
+					}
+						
+					segmentCountSpeed=0;
+					avgSpeed=0;
+					peopleNumber=0;
+					//console.log(JSON.stringify(segments));
+					for (var i = 0; i < segments.length; i++) {
+						//console.log(points[i].lat, points[i].lng, points[i].data);
+						
+						//console.log(segments[i].middleLat, segments[i].middleLng);
+							
+						if (tlLat < segments[i].middleLat && brLat > segments[i].middleLat && tlLng < segments[i].middleLng && brLng > segments[i].middleLng) {	
+							segmentsSelected.push(segments[i])
+						}
+					}
+					
+					lastIndex=0;
+					
+					if (segmentsSelected.length > 1) {
+					peopleNumber++;
+					}
+					
+					for (var i = 0; i < segmentsSelected.length-1; i++) {
+					
+							
+					
+							if ((segmentsSelected[i+1].beginTimestamp-segmentsSelected[i].endTimestamp)>80) {
+								peopleNumber++;
+							}
+
+							segmentCountSpeed+=1;
+							if (segmentsSelected[i].speed < 60) {
+								avgSpeed+=segmentsSelected[i].speed;
+							}
+						lastIndex=i;
+						
+					}
+					
+					segmentCountSpeed+=1;
+					avgSpeed+=segmentsSelected[lastIndex+1].speed;
+					
+					
+					
+					avgSpeed=avgSpeed/segmentCountSpeed;
+					console.log('AVG Speed='+avgSpeed);
+					console.log('People Number='+peopleNumber);
+					
+					
+
+					
+					
+					$( "#statistics" ).css('display','block');
+					$( "#statistics" ).html('');
+					
+					
+							$( "#statistics" ).append('<p><b>Average Route Quality</b>: '+ parseFloat(routeQualityAverage).toFixed(2)+' </p>');
+							$( "#statistics" ).append('<p><b>Average Noise</b>: '+ parseFloat(noiseAverage).toFixed(2)+' </p>');
+							$( "#statistics" ).append('<p><b>Good experience</b>: '+ yesNumber+' </p>');
+							$( "#statistics" ).append('<p><b>Bad experience</b>: '+ noNumber+' </p>');
+							$( "#statistics" ).append('<p><b>Bumps</b>: '+ bumpNumber+'</p>');
+							$( "#statistics" ).append('<p><b>Average Speed</b>: '+ parseFloat(avgSpeed).toFixed(2)+' km/h</p>');
+							$( "#statistics" ).append('<p><b>People Number</b>: '+ peopleNumber+'  </p>');
+			
+					
+		});
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+	  
+	  
+
+	});
+	
+
+    var white = L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=sk.eyJ1Ijoic2MybCIsImEiOiJjaXgwZjZxenYwMWp1MnlvMDl3M3g3OHQ2In0.KOs6h_53tws8O5UuB19NGw', {
+		id: 'mapbox.outdoors',
+		attribution: '<a href="http://www.fablabsantiago.org">Fab Lab Santiago</a>' 
+	})
+	
+    var dark = L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=sk.eyJ1Ijoic2MybCIsImEiOiJjaXgwZjZxenYwMWp1MnlvMDl3M3g3OHQ2In0.KOs6h_53tws8O5UuB19NGw', {
+		id: 'mapbox.dark',
+		attribution: '<a href="http://www.fablabsantiago.org">Fab Lab Santiago</a>' 
+	})
+	
+	lc = L.control.layers({
+        "Dark": dark,
+        "White": white
+    }).addTo(map);
+
+	
+	
+	
+	
+	L.control.locate().addTo(map);
+	
+	
+	
+
+	heat = L.heatLayer([]).addTo(map);
+	
+	
+	
+	/*
+	timeoutZoomVisibility=0;
+	
+	$('.leaflet-container').mousemove(function( event ) {
+	
+		if (displayGraph==0) {
+				$("#zoomArea").css("left", event.pageX-30);
+				$("#zoomArea").css("top", event.pageY-30);
+				//$("#zoomArea").css("display", "block");
+				clearTimeout(timeoutZoomVisibility);
+				timeoutZoomVisibility=setTimeout(function(){ $("#zoomArea").css("display", "none"); }, 3000);
+		}
+	});
+	
+	$('#dataType').mousemove(function( event ) {
+			$("#zoomArea").css("display", "none");
+	});
+
+	scale=1;
+	
+	
+	*/
+
+	
+	displayGraph=0;
+
+	map.on({ 
+	 /*
+		mousemove: function (e) {
+            zoomCenter=e.latlng;
+		},
+		*/
+		click: function (e) {
+		
+		/*
+			if (typeData=="yesno")
+				return;
+			if (displayGraph==0){
+				//console.log(e.latlng);
+				$("#zoomArea").css("display", "none");
+				draw(e.latlng, dataToShow);
+				displayGraph=1;
+			} else {
+				$("#graph").css("display", "none");
+				displayGraph=0;
+			}
+			*/
+			
+			$( "#statistics" ).css('display','none');
+		
+		},
+	})
+	
+	
+	
+	dataToShow="";
+	
+
+	
+	$( "#dataNone" ).click(function() {
+		loadHeatmap("none","none over time", 240, "dataNone", dayData);
+	});
+	
+	$( "#data0" ).click(function() {
+		loadHeatmap("audioarray","Noise over time", 840, "data0", dayData);
+	});
+	
+	$( "#data0" ).mouseover(function() {
+		setLeyenda("NoiseLevel.png", 430);
+	});
+	
+		$( "#data0" ).mouseout(function() {
+		removeLeyenda();
+	});
+
+	$( "#data1" ).click(function() {
+		loadHeatmap("humidity","Humidity over time", 5, "data1", dayData);
+	});
+	
+	
+	$( "#data2" ).click(function() {
+		loadHeatmap("co","CO over time", 5, "data2", dayData);
+	});
+	
+	$( "#data3" ).click(function() {
+		loadHeatmap("light","Light over time", 60, "data3", dayData);
+	});
+	
+	$( "#data4" ).click(function() {
+		loadHeatmap("no2","NO2 over time",3, "data4", dayData);
+	});
+	
+	$( "#data5" ).click(function() {
+		loadHeatmap("temperature","Temperature over time",0.3, "data5", dayData);
+	});
+	
+	$( "#data6" ).click(function() {
+		loadHeatmap("routequality","Route quality over time",160, "data6", dayData);
+	});
+	
+	bikeExp=false;
+	
+	$( "#bikeExperience" ).click(function() {
+		if (bikeExp==true) {
+			bikeExp=false;
+			$("#bikeExperience > span").html('&#xf096;');
+		} else {
+			
+			bikeExp=true;
+			$("#bikeExperience > span").html('&#xf046;');
+		}
+		loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+		
+	});
+	
+	
+	bikeBump=false;
+	$( "#bikeBump" ).click(function() {
+		if (bikeBump==true) {
+			bikeBump=false;
+			$("#bikeBump > span").html('&#xf096;');
+		} else {
+			
+			bikeBump=true;
+			$("#bikeBump > span").html('&#xf046;');
+		}
+		loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+		
+	});
+	
+	$( "#bikeExperience" ).mouseover(function() {
+		setLeyenda("RouteExperience.png", 160);
+	});
+	
+		$( "#bikeExperience" ).mouseout(function() {
+		removeLeyenda();
+	});
+	
+	
+	bikeUserTrip=false;
+	
+	$( "#bikeUserTrip" ).click(function() {
+		if (bikeUserTrip==true) {
+			bikeUserTrip=false;
+			$("#bikeUserTrip > span").html('&#xf096;');
+		} else {
+			
+			bikeUserTrip=true;
+			$("#bikeUserTrip > span").html('&#xf046;');
+		}
+		loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+		
+	});
+	
+	$( "#bikeUserTrip" ).mouseover(function() {
+		setLeyenda("Speed.png", 250);
+	});
+	
+	$( "#bikeUserTrip" ).mouseout(function() {
+		removeLeyenda();
+	});
+	
+	pointLayerNo=0;
+	pointLayerYes=0;
+	pointLayerBump=0;
+	
+	playInterval=0;
+	
+	function loadHeatmap(type, graphText, maxIntensity, button, dayQuery){
+	
+		stop();
+	
+		$( ".dataElements" ).removeClass("light");
+		$( "#"+button ).addClass("light");
+		
+		if (type=="none") {
+			map.removeLayer(heat);
+			map.removeLayer(pointLayerNo);
+			map.removeLayer(pointLayerYes);
+			map.removeLayer(pointLayerBump);
+			map.removeLayer(bikePath);
+			$( "#surveyArea" ).css('display','none');
+			map.removeLayer(layerSurvey);
+			if (bikeExp==true){
+							loadYesNo(dayQuery);
+						}
+						
+						if (bikeUserTrip==true){
+							loadAllPoint(dayQuery);
+						}
+			if (bikeBump==true){
+							loadBump(dayQuery);
+						}
+		} else {
+		
+			$.get( "https://smartcitizen.cl/utils/getHeatmap.php?type="+type+"&date="+dayQuery, function( data ) {
+						if (!isJson(data)){
+							console.log(data);
+							console.log("No data for "+type+" in date " + dayQuery + ".");
+							if (bikeExp==true){
+								loadYesNo(dayQuery);
+							}
+							if (bikeBump==true){
+								loadBump(dayQuery);
+							}
+							return;
+						} else {
+							console.log("https://smartcitizen.cl/utils/getHeatmap.php?type="+type+"&date="+dayQuery);
+							var points = JSON.parse(data);
+							map.removeLayer(heat);
+							map.removeLayer(pointLayerNo);
+							map.removeLayer(pointLayerYes);
+							map.removeLayer(pointLayerBump);
+							map.removeLayer(bikePath);
+							$( "#surveyArea" ).css('display','none');
+							map.removeLayer(layerSurvey);
+							
+							/*
+							heat = L.heatLayer([], {max: maxIntensity, radius: 25}).addTo(map);
+							for (var i = 0; i < points.length; i++) {
+								//console.log(points[i].lat, points[i].lng, parseInt(points[i].data));
+								heat.addLatLng([points[i].lat, points[i].lng, parseInt(points[i].data)]);
+							}	
+							*/
+							heat = L.layerGroup()
+							min=999999999999999999999999999;
+							max=0;
+							for (var i = 0; i < points.length; i++) {
+								if (parseInt(points[i].data)>0) {
+									
+									if (parseInt(points[i].data)>max) {
+										max=points[i].data;
+									}
+									
+									if (parseInt(points[i].data)<min) {
+										min=points[i].data;
+									}
+									
+								}
+								
+							}
+							
+							console.log(min, max);
+							
+							min--;
+							max++;
+							
+							for (var i = 0; i < points.length; i++) {
+							
+							
+								if (parseInt(points[i].data)>0) {
+								
+									color=heatMapColorforValue((points[i].data-min)/((max-min)/100)/100);
+								
+									heat.addLayer(L.circle([points[i].lat, points[i].lng], {
+										color: color,
+										fillColor: color,
+										fillOpacity: 0.8,
+										radius: 6,
+										weight: 0
+									}).bindPopup('Level: ' + parseFloat(points[i].data).toFixed(2)))
+								}
+								//heat.addLatLng([points[i].lat, points[i].lng, parseInt(points[i].data)]);
+							}
+							map.addLayer(heat)
+							
+							$( "svg" ).removeAttr("pointer-events");
+							
+							if (bikeExp==true){
+								loadYesNo(dayQuery);
+							}
+							
+							if (bikeBump==true){
+								loadBump(dayQuery);
+							}
+							
+							if (bikeUserTrip==true){
+								loadAllPoint(dayQuery);
+							}
+						}
+			});
+		}
+
+		$("#graph").css("display", "none");
+		displayGraph=0;
+		
+		dataToShow=graphText;
+		typeData=type;
+		intensityMax=maxIntensity;
+		buttonToHighlight=button;
+
+	
+	}
+	
+	//icomercedes
+	/*
+	var greenIcon = L.icon({
+		iconUrl: 'up.png',
+		shadowUrl: 'up.png',
+
+		iconSize:     [16, 16], // size of the icon
+		shadowSize:   [16, 16], // size of the shadow
+		iconAnchor:   [8, 10], // point of the icon which will correspond to marker's location
+		shadowAnchor: [8, 10],  // the same for the shadow
+		popupAnchor:  [8, 10] // point from which the popup should open relative to the iconAnchor
+	});
+	
+	var redIcon = L.icon({
+		iconUrl: 'down.png',
+		shadowUrl: 'down.png',
+
+		iconSize:     [16, 16], // size of the icon
+		shadowSize:   [16, 16], // size of the shadow
+		iconAnchor:   [8, 10], // point of the icon which will correspond to marker's location
+		shadowAnchor: [8, 10],  // the same for the shadow
+		popupAnchor:  [8, 10] // point from which the popup should open relative to the iconAnchor
+	});
+	*/
+	
+	var greenIcon = L.icon({
+		iconUrl: 'like.png',
+		shadowUrl: 'like.png',
+
+		iconSize:     [20, 20], // size of the icon
+		shadowSize:   [20, 20], // size of the shadow
+		iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
+		shadowAnchor: [10, 10],  // the same for the shadow
+		popupAnchor:  [10, 10] // point from which the popup should open relative to the iconAnchor
+	});
+	
+	var redIcon = L.icon({
+		iconUrl: 'dislike.png',
+		shadowUrl: 'dislike.png',
+
+		iconSize:     [20, 20], // size of the icon
+		shadowSize:   [20, 20], // size of the shadow
+		iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
+		shadowAnchor: [10, 10],  // the same for the shadow
+		popupAnchor:  [10, 10] // point from which the popup should open relative to the iconAnchor
+	});
+
+
+	
+	function loadYesNo(dayQuery){
+
+		console.log("https://smartcitizen.cl/utils/getYesNo.php?date="+dayQuery);
+		
+		$.get( "https://smartcitizen.cl/utils/getYesNo.php?date="+dayQuery, function( data ) {
+					if (!isJson(data)){
+						console.log(data);
+						console.log("No data for bike experience in date " + dayQuery + ".");
+						map.removeLayer(pointLayerNo);
+						map.removeLayer(pointLayerYes);
+						return;
+					}
+					var points = JSON.parse(data);
+					//map.removeLayer(heat);
+					map.removeLayer(pointLayerNo);
+					map.removeLayer(pointLayerYes);
+					
+					pointLayerNo = L.markerClusterGroup({
+						iconCreateFunction: function(cluster) {
+							//return L.divIcon({ html: '<b>' + cluster.getChildCount() + '</b>', className: 'markerNo', iconSize: L.point(16, 32) }); //icon mercedes
+							return L.divIcon({ html: '<b>' + cluster.getChildCount() + '</b>', className: 'markerNo', iconSize: L.point(24, 24) });
+						}
+					});
+					pointLayerYes = L.markerClusterGroup({
+						iconCreateFunction: function(cluster) {
+							//return L.divIcon({ html: '<b>' + cluster.getChildCount() + '</b>', className: 'markerYes', iconSize: L.point(16, 32) }); //icon mercedes
+							return L.divIcon({ html: '<b>' + cluster.getChildCount() + '</b>', className: 'markerYes', iconSize: L.point(24, 24) });
+						}
+					});
+					
+					//heat = L.heatLayer([], {max: maxIntensity}).addTo(map);
+					pointArray=[];
+					for (var i = 0; i < points.length; i++) {
+						//console.log(points[i].lat, points[i].lng, points[i].data);
+						
+						if (points[i].data=="yes"){
+							pointLayerYes.addLayer(L.marker([points[i].lat, points[i].lng], {icon: greenIcon}));
+							/*
+							pointArray.push(L.circle([points[i].lat, points[i].lng],
+							  {
+								color: "transparent",
+								fillColor: "green",
+								fillOpacity: 0.7,
+								radius: 30
+							  })); 
+							*/
+						} else if (points[i].data=="no"){
+						
+							pointLayerNo.addLayer(L.marker([points[i].lat, points[i].lng], {icon: redIcon}));
+						
+						/*
+							pointArray.push(L.circle([points[i].lat, points[i].lng],
+							  {
+								color: "transparent",
+								fillColor: "red",
+								fillOpacity: 0.7,
+								radius: 30
+							  })); 
+						*/
+						}
+						
+						map.addLayer(pointLayerNo);
+						map.addLayer(pointLayerYes);
+						  
+						//heat.addLatLng([points[i].lat, points[i].lng, parseInt(points[i].data)]);
+					}	
+		});
+
+		
+	
+	}
+	
+
+	var bumpIcon = L.icon({
+		iconUrl: 'bump.png',
+		shadowUrl: 'bump.png',
+
+		iconSize:     [20, 20], // size of the icon
+		shadowSize:   [20, 20], // size of the shadow
+		iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
+		shadowAnchor: [10, 10],  // the same for the shadow
+		popupAnchor:  [10, 10] // point from which the popup should open relative to the iconAnchor
+	});
+	
+	
+	
+		function loadBump(dayQuery){
+
+		console.log("https://smartcitizen.cl/utils/getBump.php?date="+dayQuery);
+		
+		$.get( "https://smartcitizen.cl/utils/getBump.php?date="+dayQuery, function( data ) {
+					if (!isJson(data)){
+						console.log(data);
+						console.log("No data for bump experience in date " + dayQuery + ".");
+						map.removeLayer(pointLayerBump);
+						return;
+					}
+					var points = JSON.parse(data);
+					map.removeLayer(pointLayerBump);
+					pointLayerBump = L.markerClusterGroup({
+						iconCreateFunction: function(cluster) {
+							return L.divIcon({ html: '<b>' + cluster.getChildCount() + '</b>', className: 'markerBump', iconSize: L.point(24, 24) });
+						}
+					});
+
+					pointArray=[];
+					for (var i = 0; i < points.length; i++) {
+
+						if (points[i].data=="yes"){
+							pointLayerBump.addLayer(L.marker([points[i].lat, points[i].lng], {icon: bumpIcon}));
+						} 
+						map.addLayer(pointLayerBump);
+					}	
+		});
+
+		
+	
+	}
+	
+	bikePath=0;
+	
+	function mysqlTimeDateToJavascriptTimeDateSeconds (timestamp){
+		var t = timestamp.split(/[- :]/);
+		var d = new Date(Date.UTC(t[0], t[1]-1, t[2], t[3], t[4], t[5]));
+		return d.getTime()/1000;
+
+	}
+
+	function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+	  var R = 6371; // Radius of the earth in km
+	  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+	  var dLon = deg2rad(lon2-lon1); 
+	  var a = 
+		Math.sin(dLat/2) * Math.sin(dLat/2) +
+		Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+		Math.sin(dLon/2) * Math.sin(dLon/2)
+		; 
+	  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	  var d = R * c; // Distance in km
+	  return d;
+	}
+
+	function deg2rad(deg) {
+	  return deg * (Math.PI/180)
+	}
+	
+	segments=[];
+	
+	function loadAllPoint(dayQuery){
+	
+		
+
+		console.log("https://smartcitizen.cl/utils/getAllPointTest.php?date="+dayQuery);
+		
+		$.get( "https://smartcitizen.cl/utils/getAllPointTest.php?date="+dayQuery, function( data ) {
+					if (!isJson(data)){
+						//console.log(data);
+						console.log("No points in date " + dayQuery + ".");
+						map.removeLayer(bikePath);
+						return;
+					}
+					data = JSON.parse(data);
+					//console.log(data);
+					//map.removeLayer(heat);
+					map.removeLayer(bikePath);
+					//heat = L.heatLayer([], {max: maxIntensity}).addTo(map);
+					pointArray=[];
+					segments=[];
+					
+					for (var i = 0; i < data.length-1; i++) {
+						segments.push({ distance:0, speed:0, timeInterval:0, beginLat: data[i].lat, beginLng: data[i].lng, beginUser: data[i].deviceId, beginTimestamp: mysqlTimeDateToJavascriptTimeDateSeconds(data[i].timestamp),       endLat: data[i+1].lat, endLng: data[i+1].lng, endUser: data[i+1].deviceId, endTimestamp: mysqlTimeDateToJavascriptTimeDateSeconds(data[i+1].timestamp)} );
+					}
+					
+					//remove elements (e.g., segments of different users, or where timeinterval is too long) and compute distance in km and timeinterval
+					for (var i = 0; i < segments.length; i++) {
+					
+					
+					
+						if (segments[i].beginLat==0 || segments[i].beginLng==0 || segments[i].endLat==0 || segments[i].endLng==0) {
+							//console.log("RemoveLatLng0", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+						
+						if (segments[i].beginUser != segments[i].endUser) {
+							//console.log("RemoveDifferentUser", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+
+						if ((segments[i].endTimestamp-segments[i].beginTimestamp)>80) {
+							//console.log("RemoveTimeDifference", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+						
+						
+						if (segments[i].beginLng==segments[i].endLng && segments[i].beginLat==segments[i].endLat) {
+							//console.log("RemovePoint", segments[i]);
+							segments.splice(i, 1);
+							if (i>0)
+								i--;
+						}
+					}
+					
+						//compute distance in km and timeinterval
+					for (var i = 0; i < segments.length; i++) {
+					
+						segments[i].timeInterval=segments[i].endTimestamp-segments[i].beginTimestamp;
+						segments[i].distance=getDistanceFromLatLonInKm(segments[i].beginLat, segments[i].beginLng, segments[i].endLat, segments[i].endLng);
+						segments[i].speed=segments[i].distance/(segments[i].timeInterval/2400);
+
+					}
+					
+					
+					console.log(JSON.stringify(segments));
+					
+					
+
+					
+					for (var i = 0; i < segments.length; i++) {
+						//console.log(points[i].lat, points[i].lng, points[i].data);
+						
+							var line = [
+								[segments[i].beginLat, segments[i].beginLng],
+								[segments[i].endLat, segments[i].endLng]
+							];
+							
+							switch (true) {
+								case (segments[i].speed < 10):
+									segColor="red";
+									break;
+								case (segments[i].speed > 10 && segments[i].speed < 22):
+									segColor="yellow";
+									break;
+								case (segments[i].speed > 22):
+									segColor="blue";
+									break;
+								default:
+									console.log("error");
+									break;
+							}
+							
+							if (segments[i].speed < 60) {
+							
+								pointArray.push(L.polyline(line,
+								  {
+									color: segColor,
+									opacity: 0.6
+									
+								  }).bindPopup('Speed: ' + segments[i].speed.toFixed(2) + ' km/h <br />Length: ' + (segments[i].distance*1000).toFixed(2) + ' mt')); 
+							
+							}
+						
+						  
+						//heat.addLatLng([points[i].lat, points[i].lng, parseInt(points[i].data)]);
+					}	
+					
+					bikePath = L.layerGroup(pointArray).addTo(map)
+					$( "svg" ).removeAttr("pointer-events");
+		});
+
+		
+	
+	}
+	
+	play=false;
+	
+	playSegments=0
+	
+	$( "#playStop" ).click(function() {
+		if (play == false) {
+			play=true;
+			//clear all and play
+			map.removeLayer(heat);
+			map.removeLayer(pointLayerNo);
+			map.removeLayer(pointLayerYes);
+			map.removeLayer(bikePath);
+			
+			dayQuery=dayData;
+			$("#playStop > span.icon").html("&#xf04d;");
+			
+			
+			console.log("https://smartcitizen.cl/utils/getAllPointTest.php?date="+dayQuery);
+		
+		$.get( "https://smartcitizen.cl/utils/getAllPointTest.php?date="+dayQuery, function( data ) {
+					if (!isJson(data)){
+						//console.log(data);
+						console.log("No points in date " + dayQuery + ".");
+						
+						return;
+					}
+					data = JSON.parse(data);
+					//console.log(data);
+					//map.removeLayer(heat);
+					
+					//heat = L.heatLayer([], {max: maxIntensity}).addTo(map);
+					pointArray=[];
+					segments=[];
+					for (var i = 0; i < data.length-1; i++) {
+						segments.push({ distance:0, speed:0, timeInterval:0, beginLat: data[i].lat, beginLng: data[i].lng, beginUser: data[i].deviceId, beginTimestamp: mysqlTimeDateToJavascriptTimeDateSeconds(data[i].timestamp),       endLat: data[i+1].lat, endLng: data[i+1].lng, endUser: data[i+1].deviceId, endTimestamp: mysqlTimeDateToJavascriptTimeDateSeconds(data[i+1].timestamp)} );
+					}
+					
+					//remove elements (e.g., segments of different users, or where timeinterval is too long) and compute distance in km and timeinterval
+					for (var i = 0; i < segments.length; i++) {
+					
+						if (segments[i].beginLat==0 || segments[i].beginLng==0 || segments[i].endLat==0 || segments[i].endLng==0) {
+							//console.log("RemoveLatLng0", segments[i]);
+							segments.splice(i, 1);
+							i--;
+						}
+						
+						if (segments[i].beginUser != segments[i].endUser) {
+							//console.log("RemoveDifferentUser", segments[i]);
+							segments.splice(i, 1);
+							i--;
+						}
+
+						if ((segments[i].endTimestamp-segments[i].beginTimestamp)>80) {
+							//console.log("RemoveTimeDifference", segments[i]);
+							segments.splice(i, 1);
+							i--;
+						}
+						
+						if (segments[i].beginLng==segments[i].endLng && segments[i].beginLat==segments[i].endLat) {
+							//console.log("RemovePoint", segments[i]);
+							segments.splice(i, 1);
+							i--;
+						}
+					}
+					
+						//compute distance in km and timeinterval
+					for (var i = 0; i < segments.length; i++) {
+					
+						segments[i].timeInterval=segments[i].endTimestamp-segments[i].beginTimestamp;
+						segments[i].distance=getDistanceFromLatLonInKm(segments[i].beginLat, segments[i].beginLng, segments[i].endLat, segments[i].endLng);
+						segments[i].speed=segments[i].distance/(segments[i].timeInterval/2400);
+
+					}
+					/*
+					for (var i = 0; i < segments.length; i++) {
+	
+							console.log(segments[i]);
+					}
+					*/
+					
+					console.log("Order by timestamp");
+					
+					segments.sort(function(a,b) {return (a.beginTimestamp > b.beginTimestamp) ? 1 : ((b.beginTimestamp > a.beginTimestamp) ? -1 : 0);} );
+					
+					
+					segmentSequence=-1;
+					
+					var theDate = new Date(segments[0].endTimestamp * 1000);
+					dateString = theDate.toGMTString().substring(0, theDate.toGMTString().length - 3);
+						
+					$("#dateTimePlay").html(dateString);
+					
+					$("#dateTimePlay").css("display", "block");
+					
+					traceElementShow=60;
+					
+					playInterval=setInterval(function(){
+					
+						segmentSequence++;
+						pointArray=[];
+						
+						
+						
+						opacity=0;
+						for (var i = segmentSequence; i < segmentSequence+traceElementShow; i++) {
+						opacity++;
+						
+							if (segmentSequence+i+32>segments.length) {
+								console.log("stop");
+								clearInterval(playInterval);
+								$("#playStop > span.icon").html("&#xf04b;");
+								map.removeLayer(playSegments);
+								$("#dateTimePlay").css("display", "none");
+								play=false;
+								loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+							}
+	
+							var line = 	[
+										[segments[segmentSequence+i].beginLat, segments[segmentSequence+i].beginLng],
+										[segments[segmentSequence+i].endLat, segments[segmentSequence+i].endLng]
+									];
+									
+							theDate = new Date(segments[segmentSequence+i].endTimestamp * 1000);
+							
+							opacitynew=opacity/traceElementShow;
+							pointArray.push(L.polyline(line,{ color: "yellow", opacity: opacitynew })); 
+							
+						
+						}
+						
+						console.log(pointArray);
+						
+						dateString = theDate.toGMTString().substring(0, theDate.toGMTString().length - 3);
+						$("#dateTimePlay").html(dateString);
+						
+						
+						map.removeLayer(playSegments);
+						playSegments = L.layerGroup(pointArray).addTo(map)
+						
+						
+
+					
+					}, 100);
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					/*
+					
+						playInterval=setInterval(function(){
+					
+						segmentSequence++;
+						
+						if (segmentSequence+2>segments.length) {
+							console.log("stop");
+							clearInterval(playInterval);
+							$("#playStop > span.icon").html("&#xf04b;");
+							map.removeLayer(playSegments);
+							$("#dateTimePlay").css("display", "none");
+							play=false;
+							loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+						}
+						
+						if (pointArray.length > 30) {
+							pointArray.shift();
+						}
+					
+						var line = 	[
+										[segments[segmentSequence].beginLat, segments[segmentSequence].beginLng],
+										[segments[segmentSequence].endLat, segments[segmentSequence].endLng]
+									];
+									
+						var theDate = new Date(segments[segmentSequence].endTimestamp * 1000);
+						dateString = theDate.toGMTString();
+						
+						$("#dateTimePlay").html(dateString);
+								
+						pointArray.push(L.polyline(line,{ color: "yellow", opacity: 1 })); 
+						
+						map.removeLayer(playSegments);
+						playSegments = L.layerGroup(pointArray).addTo(map)
+						
+						
+
+					
+					}, 30);
+					
+					
+					*/
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+		});
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+		
+		
+		} else {
+		//stop and reset the state of the system
+		stop();
+		loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+		
+		}
+		
+	});
+	
+	playInterval=0;
+	 function stop() {
+		clearInterval(playInterval);
+		$("#dateTimePlay").css("display", "none");
+		map.removeLayer(playSegments);
+		$("#playStop > span.icon").html("&#xf04b;");
+
+		play=false;
+	 
+	 }
+
+	
+	$('input[name="daterange"]').daterangepicker({
+        timePicker: true,
+        timePickerIncrement: 30,
+        locale: {
+            format: 'DD/MM/YYYY h:mm A'
+        }
+    });
+	
+	$('input[name="daterange"]').on('apply.daterangepicker', function(ev, picker) {
+      console.log(picker.startDate.format('MM/DD/YYYY'));
+	  console.log(picker.endDate.format('MM/DD/YYYY'));
+	  
+	  console.log(picker.startDate._d.toMysqlFormat());
+	  console.log(picker.endDate._d.toMysqlFormat());
+	  
+	  console.log("'"+picker.startDate._d.toMysqlFormat() + "' AND '" + picker.endDate._d.toMysqlFormat()+"'");
+	  
+	  setDateForQuery("'"+picker.startDate._d.toMysqlFormat() + "' AND '" + picker.endDate._d.toMysqlFormat()+"'");
+  });
+  
+  
+	
+	function setDateForQuery(dateObj){
+		dayData=dateObj;
+
+		if (first==true){
+			loadHeatmap("none","Noise over time", 240, "dataNone", dayData);
+			first=false;
+		} else {
+			if (typeData=="yesno") {
+				loadYesNo(dataToShow, buttonToHighlight, dayData);
+			} else {
+				loadHeatmap(typeData,dataToShow, intensityMax, buttonToHighlight, dayData);
+			}
+		}
+		
+		
+	}
+	
+	
+	setDateForQuery("'2017-08-20 13:30:00' AND '2017-08-24 14:00:00'");
+
+	//showCiclovias();
+	
+	
+	
+	
+
+		var randomScalingFactor = function() {
+			return (Math.round(Math.random() * 100));
+		};
+
+
+
+		function newDate(days) {
+			return moment().add(days, 'd').toDate();
+		}
+
+		var color = Chart.helpers.color;
+
+
+		function draw(cords, dataToShow){
+			graphConfig = {
+				type: 'line',
+				data: {
+					datasets: [{
+						label: dataToShow,
+						backgroundColor: color(window.chartColors.blue).alpha(0.8).rgbString(),
+						borderColor: window.chartColors.blue,
+						fill: false,
+						data: []
+					}]
+				},
+				options: {
+					responsive: true,
+					title:{
+						display:false,
+						text:"Graph"
+					},
+					scales: {
+						xAxes: [{
+							type: "time",
+							display: true,
+							scaleLabel: {
+								display: true,
+								labelString: 'Date'
+							}
+						}],
+						yAxes: [{
+							display: true,
+							scaleLabel: {
+								display: true,
+								labelString: 'value'
+							}
+						}]
+					}
+				}
+			};
+		
+			var ctx = document.getElementById("canvasGraph").getContext("2d");
+			myLine = new Chart(ctx, graphConfig);
+			
+			
+			radiusArea=5; // hard coded, but depends to zoom...
+			
+			$.get( "https://smartcitizen.cl/utils/getGraphData.php?type="+typeData+"&radius="+radiusArea+"&lat="+cords.lat+"&lng="+cords.lng, function( data ) {
+					if (!isJson(data)){
+						console.log("No data...");
+						return;
+					}
+					var values = JSON.parse(data);
+					for (var i = 0; i < values.length; i++) {
+						//console.log(values[i].day, values[i].data);
+						
+						graphConfig.data.datasets[0].data.push({
+							x: values[i].day,
+							y: values[i].data,
+						});
+					}
+					myLine.update();
+					$("#graph").css("display", "block");
+			});
+
+			
+		}
+
+
+
+
+
+function isJson(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+
+var styleCiclovias = {
+    "color": "#ffffff",
+    "weight": 2,
+    "opacity": 0.65
+};
+
+bikeRoute=false;
+	
+$( "#bikeRoute" ).click(function() {
+	if (bikeRoute==true) {
+		bikeRoute=false;
+		$("#bikeRoute > span").html('&#xf096;');
+		removeCiclovias();
+	} else {
+		bikeRoute=true;
+		$("#bikeRoute > span").html('&#xf046;');
+		showCiclovias();  
+	}
+
+		
+});
+
+
+
+function showCiclovias(){
+	$.get( "utils/ciclovias.json", function(data) {
+		layerCiclovia = L.geoJson(data, {style: styleCiclovias});
+		layerCiclovia.addTo(map);
+	});
+}
+
+function removeCiclovias(){
+	map.removeLayer(layerCiclovia);
+}
+
+endTPDate=0;
+
+
+function twoDigits(d) {
+    if(0 <= d && d < 10) return "0" + d.toString();
+    if(-10 < d && d < 0) return "-0" + (-1*d).toString();
+    return d.toString();
+}
+
+/**
+ * …and then create the method to output the date string as desired.
+ * Some people hate using prototypes this way, but if you are going
+ * to apply this to more than one Date object, having it as a prototype
+ * makes sense.
+ **/
+Date.prototype.toMysqlFormat = function() {
+    return this.getFullYear() + "-" + twoDigits(1 + this.getMonth()) + "-" + twoDigits(this.getDate()) + " " + twoDigits(this.getHours()) + ":" + twoDigits(this.getMinutes()) + ":" + twoDigits(this.getSeconds());
+};
+
+
+Date.prototype.addDays = function(days) {
+  var dat = new Date(this.valueOf());
+  dat.setDate(dat.getDate() + days);
+  return dat;
+}
+
+	
+	$("#mapContainer").css("width", $( window ).width()-236+"px");
+	
+	
+	
+});
+
+
+
+$( window ).resize(function() {
+	$("#mapContainer").css("width", $( window ).width()-236+"px");
+});
+
+
+
+
+
+
+
+function heatMapColorforValue(value){
+  var h = (1.0 - value) * 240
+  //return "hsl(" + h + ", 100%, 50%)";
+  
+  rgbValue = HSLToRGB(h,-1.007905138339921,127.5)
+  
+  	var red=parseInt(rgbValue[0]).toString(16);
+	var green=parseInt(rgbValue[1]).toString(16);
+	var blue=parseInt(rgbValue[2]).toString(16);
+	if (red.length==1)
+		red='0'+red;
+	if (green.length==1)
+		green='0'+green;
+	if (blue.length==1)
+		blue='0'+blue;
+		
+    return '#' + red+''+green+''+blue;
+	
+  
+}
+
+
+function HSLToRGB(h, s, l) {
+	if (s == 0) {
+		return [l, l, l];
+	}
+
+	var temp2 = l < 0.5 ? l * (1 + s) : l + s - l * s;
+	var temp1 = 2 * l - temp2;
+
+	h /= 360;
+
+	var
+	rtemp = (h + 1 / 3) % 1,
+	gtemp = h,
+	btemp = (h + 2 / 3) % 1,
+	rgb = [rtemp, gtemp, btemp],
+	i = 0;
+
+	for (; i < 3; ++i) {
+		rgb[i] = rgb[i] < 1 / 6 ? temp1 + (temp2 - temp1) * 6 * rgb[i] : rgb[i] < 1 / 2 ? temp2 : rgb[i] < 2 / 3 ? temp1 + (temp2 - temp1) * 6 * (2 / 3 - rgb[i]) : temp1;
+	}
+
+	return rgb;
+}
+
+
+
+
+
+
+
+
+</script>
+
+
+
+<script src='jam/require.js'></script>
+<script src='shapefile/leaflet.spin.js'></script>
+<script src='shapefile/mapSetup.js'></script>
+<script src='shapefile/script.js'></script>
+
+
+
+</body>
+</html>
